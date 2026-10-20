@@ -243,6 +243,8 @@ export default function App() {
               onChange={onChange}
               placeholder="Ej: Llamada con el doctor"
               autoComplete="off"
+              data-gramm="false"
+              data-enable-grammarly="false"
             />
 
             <label className="field-label">Descripción <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(opcional)</span></label>
@@ -254,6 +256,8 @@ export default function App() {
               placeholder="Notas adicionales..."
               rows={2}
               style={{ resize: 'vertical' }}
+              data-gramm="false"
+              data-enable-grammarly="false"
             />
 
             <div className="divider" />
