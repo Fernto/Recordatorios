@@ -51,12 +51,18 @@ Recordatorios/
 ├── .gitignore               # Ignora node_modules, .env, dist
 ├── agent.md                 # Este documento de contexto para IAs y desarrolladores
 ├── cron.mjs                 # Servicio worker/cron en Node.js para envíos y keep-alive
+├── mailer.mjs               # Módulo centralizado de emails, plantillas HTML y .ics
+├── netlify.toml             # Configuración de despliegue y redirects de Netlify
+├── netlify/
+│   └── functions/
+│       ├── check-reminders.mjs   # Serverless Cron / Webhook
+│       └── send-confirmation.mjs # API para despacho inmediato al agendar
 ├── index.html               # Entrada HTML con fuentes Google (Inter)
 ├── package.json             # Dependencias y scripts npm
 ├── supabase_schema.sql      # Definición de tablas, vistas, índices y RLS en PostgreSQL
-├── vite.config.js           # Configuración de Vite con plugin React
+├── vite.config.js           # Configuración de Vite con middleware de dev para /api
 └── src/
-    ├── api.js               # Métodos de acceso a Supabase (crear, listar, actualizar)
+    ├── api.js               # Métodos de acceso a Supabase y llamada a send-confirmation
     ├── App.jsx              # Componente principal React (Formulario, Lista, Filtros, Badges)
     ├── index.css            # Estilos globales, variables CSS y clases glassmorphism
     ├── main.jsx             # Punto de entrada de React DOM

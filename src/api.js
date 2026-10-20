@@ -19,7 +19,22 @@ export async function crearRecordatorio(recordatorio) {
     .select();
 
   if (error) throw new Error(`Error al crear en Supabase: ${error.message}`);
-  return data?.[0] || { ok: true };
+  const nuevo = data?.[0];
+
+  // Despacho inmediato del correo de confirmación (funciona en dev y en producción)
+  if (nuevo) {
+    try {
+      await fetch('/api/send-confirmation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(nuevo),
+      });
+    } catch (errConfirm) {
+      console.warn('⚠️ Envío inmediato diferido al cron:', errConfirm);
+    }
+  }
+
+  return nuevo || { ok: true };
 }
 
 // ─── LISTAR RECORDATORIOS ───────────────────────────────────────────────────
