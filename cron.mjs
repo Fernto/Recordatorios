@@ -183,6 +183,8 @@ function generarHtmlEmail(rec) {
   </div>
  </body>
 </html>`;
+}
+
 /**
  * Genera el HTML del correo de confirmación de agendado.
  */
