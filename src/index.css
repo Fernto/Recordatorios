@@ -278,6 +278,19 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
   margin: 18px 0;
 }
 
+/* ── Ocultar badge/widget de Netlify ──────────────────────────── */
+#netlify-badge,
+.netlify-badge,
+[class*="netlify-drawer"],
+[data-netlify-drawer],
+iframe[src*="netlify.app"],
+div[data-testid="badge"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
 /* ── Hint ─────────────────────────────────────────────────────── */
 .hint { font-size: 11px; color: var(--text-muted); margin-top: 4px; word-break: break-word; }
 
