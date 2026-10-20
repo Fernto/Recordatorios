@@ -149,9 +149,13 @@ export default function App() {
         fecha_hora:   new Date(form.fecha_hora).toISOString(),
         anticipacion: Number(form.anticipacion),
       });
-      setMsgExito('✅ ¡Recordatorio creado! Recibirás la notificación a tiempo.');
+      setMsgExito('✅ ¡Recordatorio programado! Te enviamos un correo de confirmación.');
       setForm(FORM_INICIAL);
       cargarLista();
+      // Disparar envío inmediato de la confirmación si estamos en Netlify
+      if (window.location.hostname.includes('netlify.app')) {
+        fetch('/.netlify/functions/check-reminders').catch(() => {});
+      }
     } catch (err) {
       setMsgError('❌ Error al crear el recordatorio. Intenta de nuevo.');
       console.error(err);

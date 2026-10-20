@@ -152,6 +152,10 @@ EMAIL_FROM_NAME="Recordatorios"
    - Cada correo despachado por `cron.mjs` incluye botones interactivos con enlaces directos para agendar el evento en **Google Calendar** y **Outlook Calendar Web**.
    - Se genera dinámicamente un archivo adjunto estándar **`.ics` (iCalendar / RFC 5545)** con `METHOD: REQUEST` y el objeto `icalEvent` de Nodemailer, lo que activa la detección nativa de invitaciones de calendario en Apple Mail (iOS/Mac), Outlook Desktop y Gmail.
    - En los mensajes de WhatsApp también se incluye el enlace directo a Google Calendar para agendar el evento con un solo toque desde el chat.
+7. **Ciclo de Vida de Notificaciones (Doble Correo):**
+   - **Correo 1: Confirmación de Agendado**: Al crearse el recordatorio en Supabase entra con `confirmacion_enviada = false`. El sistema (`cron.mjs` o la función serverless de Netlify) detecta los registros con `confirmacion_enviada = false` y despacha de inmediato un correo de confirmación con la ficha técnica completa del evento, los botones para guardarlo en calendario y el archivo `.ics`. Luego actualiza `confirmacion_enviada = true`.
+   - **Correo 2: Notificación Próxima (Aviso)**: Cuando el tiempo actual alcanza el momento de anticipación configurado `(fecha_hora - anticipacion <= now())`, entra en la vista `v_recordatorios_pendientes` y se despacha el correo de alerta (`¡Es la hora de tu recordatorio!`). Al finalizar, se marca el recordatorio como `'enviado'` (o se reprograma si tiene recurrencia).
+
 
 ---
 

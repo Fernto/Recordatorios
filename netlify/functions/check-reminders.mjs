@@ -150,6 +150,85 @@ function generarHtmlEmail(rec) {
 </html>`;
 }
 
+function generarHtmlEmailConfirmacion(rec) {
+  const fecha = new Date(rec.fecha_hora).toLocaleString('es-MX', {
+    dateStyle: 'full', timeStyle: 'short',
+  });
+  const { googleUrl, outlookUrl } = generarLinksCalendario(rec);
+  const textoAnticipacion = rec.anticipacion < 60
+    ? `${rec.anticipacion} minutos antes`
+    : rec.anticipacion === 1440
+    ? '1 día antes'
+    : `${rec.anticipacion / 60} hora(s) antes`;
+
+  return `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Confirmación: ${rec.titulo}</title>
+</head>
+<body style="margin:0;padding:0;background:#f0f4f8;font-family:'Segoe UI',Arial,sans-serif;">
+  <div style="max-width:560px;margin:32px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.10);">
+    <div style="background:linear-gradient(135deg,#059669 0%,#2563eb 100%);padding:32px 32px 24px;text-align:center;">
+      <div style="font-size:48px;margin-bottom:8px;">🎉</div>
+      <h1 style="margin:0;color:#fff;font-size:22px;font-weight:700;">¡Recordatorio Agendado con Éxito!</h1>
+      <p style="margin:6px 0 0;color:rgba(255,255,255,0.9);font-size:14px;">Hemos registrado tu evento en el sistema</p>
+    </div>
+    <div style="padding:28px 32px;">
+      <h2 style="margin:0 0 8px;font-size:20px;color:#1a1a2e;">${rec.titulo}</h2>
+      ${rec.descripcion ? `<p style="color:#555;margin:0 0 16px;font-size:15px;line-height:1.5;">${rec.descripcion}</p>` : ''}
+      
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:16px 18px;margin:16px 0;">
+        <p style="margin:0 0 8px;color:#166534;font-size:14px;">
+          📅 <strong>Fecha programada:</strong> ${fecha}
+        </p>
+        <p style="margin:0 0 8px;color:#166534;font-size:14px;">
+          ⏰ <strong>Te notificaremos:</strong> ${textoAnticipacion}
+        </p>
+        ${rec.recurrencia !== 'ninguna' ? `
+        <p style="margin:0 0 8px;color:#166534;font-size:14px;">
+          🔁 <strong>Repetición:</strong> ${rec.recurrencia.charAt(0).toUpperCase() + rec.recurrencia.slice(1)}
+        </p>` : ''}
+        <p style="margin:0;color:#166534;font-size:14px;">
+          🔔 <strong>Canal de aviso:</strong> ${rec.canal.toUpperCase()}
+        </p>
+      </div>
+
+      <div style="margin:24px 0 12px;padding:18px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;text-align:center;">
+        <p style="margin:0 0 12px;font-size:14px;font-weight:600;color:#334155;">
+          🗓️ Guarda este evento ahora en tu calendario:
+        </p>
+        <div style="display:inline-block;margin:0 4px 6px;">
+          <a href="${googleUrl}" target="_blank" rel="noopener noreferrer"
+             style="display:inline-block;background:#4285F4;color:#ffffff;text-decoration:none;padding:10px 18px;border-radius:8px;font-size:13px;font-weight:600;">
+            + Google Calendar
+          </a>
+        </div>
+        <div style="display:inline-block;margin:0 4px 6px;">
+          <a href="${outlookUrl}" target="_blank" rel="noopener noreferrer"
+             style="display:inline-block;background:#0078D4;color:#ffffff;text-decoration:none;padding:10px 18px;border-radius:8px;font-size:13px;font-weight:600;">
+            + Outlook Calendar
+          </a>
+        </div>
+        <p style="margin:8px 0 0;font-size:12px;color:#94a3b8;">
+          📎 También se adjuntó el archivo <strong>.ics</strong> para Apple Calendar y otros.
+        </p>
+      </div>
+      
+      <p style="font-size:13px;color:#64748b;text-align:center;margin-top:20px;">
+        💡 <em>Te volveremos a enviar un correo de recordatorio cuando se acerque la hora de tu evento.</em>
+      </p>
+    </div>
+    <div style="background:#f9fafb;padding:16px 32px;border-top:1px solid #e5e7eb;text-align:center;">
+      <p style="margin:0;color:#9ca3af;font-size:12px;">Enviado por tu Sistema de Recordatorios 🔔</p>
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
 async function guardarLog(recordatorioId, canal, destinatario, estado, errorMsg = null) {
   await supabase.from('logs_envios').insert({
     recordatorio_id: recordatorioId,
@@ -162,13 +241,71 @@ async function guardarLog(recordatorioId, canal, destinatario, estado, errorMsg 
 
 // ── Handler de Netlify Function ─────────────────────────────────────────────
 export default async function handler(req, context) {
-  // Opcional: Proteger con token secreto si se define CRON_SECRET en Netlify
   const authHeader = req.headers.get?.('authorization') || '';
   if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return new Response(JSON.stringify({ error: 'No autorizado' }), { status: 401 });
   }
 
   try {
+    const confirmacionesEnviadas = [];
+    const avisosEnviados = [];
+
+    // ── FASE 1: Confirmaciones de agendado pendientes ──────────────────────
+    const { data: noConfirmados } = await supabase
+      .from('recordatorios')
+      .select('*')
+      .eq('confirmacion_enviada', false)
+      .eq('estado', 'pendiente');
+
+    if (noConfirmados && noConfirmados.length > 0) {
+      for (const rec of noConfirmados) {
+        if (rec.canal === 'email' || rec.canal === 'ambos') {
+          const correos = parsearDestinatarios(rec.destinatario_email);
+          if (correos.length > 0) {
+            try {
+              const icsContenido = generarIcs(rec);
+              const nombreArchivoIcs = `confirmacion_${(rec.titulo || 'evento').toLowerCase().replace(/[^a-z0-9]/g, '_').slice(0, 25)}.ics`;
+              const { googleUrl } = generarLinksCalendario(rec);
+
+              await transporter.sendMail({
+                from: `"${process.env.EMAIL_FROM_NAME || 'Recordatorios'}" <${process.env.SMTP_USER}>`,
+                to: correos.join(', '),
+                subject: `✅ Confirmación: Recordatorio programado "${rec.titulo}"`,
+                html: generarHtmlEmailConfirmacion(rec),
+                text: `¡Recordatorio Agendado con Éxito!\n\nEvento: ${rec.titulo}\nFecha: ${new Date(rec.fecha_hora).toLocaleString('es-MX')}\n\nAgendar: ${googleUrl}`,
+                icalEvent: {
+                  filename: nombreArchivoIcs,
+                  method: 'REQUEST',
+                  content: icsContenido,
+                },
+                attachments: [
+                  {
+                    filename: nombreArchivoIcs,
+                    content: icsContenido,
+                    contentType: 'text/calendar; charset=utf-8; method=REQUEST',
+                  },
+                ],
+              });
+              for (const c of correos) {
+                await guardarLog(rec.id, 'email', c, 'ok');
+              }
+              confirmacionesEnviadas.push({ id: rec.id, titulo: rec.titulo, email: true });
+            } catch (e) {
+              for (const c of correos) {
+                await guardarLog(rec.id, 'email', c, 'error', e.message);
+              }
+            }
+          }
+        }
+
+        await supabase
+          .from('recordatorios')
+          .update({ confirmacion_enviada: true })
+          .eq('id', rec.id);
+      }
+    }
+
+    // ── FASE 2: Avisos de recordatorios próximos a vencer ───────────────────
     const { data: recordatorios, error } = await supabase
       .from('v_recordatorios_pendientes')
       .select('*');
@@ -177,94 +314,95 @@ export default async function handler(req, context) {
       return new Response(JSON.stringify({ error: error.message }), { status: 500 });
     }
 
-    if (!recordatorios || recordatorios.length === 0) {
-      return new Response(JSON.stringify({ message: 'Sin recordatorios pendientes', procesados: 0 }), { status: 200 });
-    }
+    if (recordatorios && recordatorios.length > 0) {
+      for (const rec of recordatorios) {
+        const res = { id: rec.id, titulo: rec.titulo, email: false, whatsapp: false };
 
-    const resultados = [];
-
-    for (const rec of recordatorios) {
-      const res = { id: rec.id, titulo: rec.titulo, email: false, whatsapp: false };
-
-      // 1. WhatsApp
-      if (rec.canal === 'whatsapp' || rec.canal === 'ambos') {
-        const numeros = parsearDestinatarios(rec.destinatario_wa);
-        for (const numero of numeros) {
-          const { googleUrl } = generarLinksCalendario(rec);
-          const mensaje = `⏰ *¡Recordatorio!* ${rec.titulo}${rec.descripcion ? `\n\n${rec.descripcion}` : ''}\n\n🗓️ Agendar en Google Calendar:\n${googleUrl}`;
-          const url = `https://api.callmebot.com/whatsapp.php?phone=${numero}&text=${encodeURIComponent(mensaje)}&apikey=${CALLMEBOT_APIKEY}`;
-          try {
-            const resp = await fetch(url);
-            if (resp.ok) {
-              await guardarLog(rec.id, 'whatsapp', numero, 'ok');
-              res.whatsapp = true;
-            } else {
-              throw new Error(`HTTP ${resp.status}`);
-            }
-          } catch (e) {
-            await guardarLog(rec.id, 'whatsapp', numero, 'error', e.message);
-          }
-        }
-      }
-
-      // 2. Email con Calendario
-      if (rec.canal === 'email' || rec.canal === 'ambos') {
-        const correos = parsearDestinatarios(rec.destinatario_email);
-        if (correos.length > 0) {
-          try {
-            const icsContenido = generarIcs(rec);
-            const nombreArchivoIcs = `${(rec.titulo || 'recordatorio').toLowerCase().replace(/[^a-z0-9]/g, '_').slice(0, 30)}.ics`;
+        // 1. WhatsApp
+        if (rec.canal === 'whatsapp' || rec.canal === 'ambos') {
+          const numeros = parsearDestinatarios(rec.destinatario_wa);
+          for (const numero of numeros) {
             const { googleUrl } = generarLinksCalendario(rec);
-
-            await transporter.sendMail({
-              from: `"${process.env.EMAIL_FROM_NAME || 'Recordatorios'}" <${process.env.SMTP_USER}>`,
-              to: correos.join(', '),
-              subject: `⏰ Recordatorio: ${rec.titulo}`,
-              html: generarHtmlEmail(rec),
-              text: `Recordatorio: ${rec.titulo}\n\n${rec.descripcion || ''}\n\nFecha: ${new Date(rec.fecha_hora).toLocaleString('es-MX')}\n\nAgendar: ${googleUrl}`,
-              icalEvent: {
-                filename: nombreArchivoIcs,
-                method: 'REQUEST',
-                content: icsContenido,
-              },
-              attachments: [
-                {
-                  filename: nombreArchivoIcs,
-                  content: icsContenido,
-                  contentType: 'text/calendar; charset=utf-8; method=REQUEST',
-                },
-              ],
-            });
-            for (const correo of correos) {
-              await guardarLog(rec.id, 'email', correo, 'ok');
-            }
-            res.email = true;
-          } catch (e) {
-            for (const correo of correos) {
-              await guardarLog(rec.id, 'email', correo, 'error', e.message);
+            const mensaje = `⏰ *¡Recordatorio!* ${rec.titulo}${rec.descripcion ? `\n\n${rec.descripcion}` : ''}\n\n🗓️ Agendar en Google Calendar:\n${googleUrl}`;
+            const url = `https://api.callmebot.com/whatsapp.php?phone=${numero}&text=${encodeURIComponent(mensaje)}&apikey=${CALLMEBOT_APIKEY}`;
+            try {
+              const resp = await fetch(url);
+              if (resp.ok) {
+                await guardarLog(rec.id, 'whatsapp', numero, 'ok');
+                res.whatsapp = true;
+              } else {
+                throw new Error(`HTTP ${resp.status}`);
+              }
+            } catch (e) {
+              await guardarLog(rec.id, 'whatsapp', numero, 'error', e.message);
             }
           }
         }
-      }
 
-      // 3. Actualizar estado / recurrencia
-      if (rec.recurrencia && rec.recurrencia !== 'ninguna') {
-        const proximaFecha = calcularProximaFecha(rec.fecha_hora, rec.recurrencia);
-        await supabase
-          .from('recordatorios')
-          .update({ fecha_hora: proximaFecha, estado: 'pendiente' })
-          .eq('id', rec.id);
-      } else {
-        await supabase
-          .from('recordatorios')
-          .update({ estado: 'enviado' })
-          .eq('id', rec.id);
-      }
+        // 2. Email con Calendario (Aviso próximo)
+        if (rec.canal === 'email' || rec.canal === 'ambos') {
+          const correos = parsearDestinatarios(rec.destinatario_email);
+          if (correos.length > 0) {
+            try {
+              const icsContenido = generarIcs(rec);
+              const nombreArchivoIcs = `${(rec.titulo || 'recordatorio').toLowerCase().replace(/[^a-z0-9]/g, '_').slice(0, 30)}.ics`;
+              const { googleUrl } = generarLinksCalendario(rec);
 
-      resultados.push(res);
+              await transporter.sendMail({
+                from: `"${process.env.EMAIL_FROM_NAME || 'Recordatorios'}" <${process.env.SMTP_USER}>`,
+                to: correos.join(', '),
+                subject: `⏰ Recordatorio: ${rec.titulo}`,
+                html: generarHtmlEmail(rec),
+                text: `Recordatorio: ${rec.titulo}\n\n${rec.descripcion || ''}\n\nFecha: ${new Date(rec.fecha_hora).toLocaleString('es-MX')}\n\nAgendar: ${googleUrl}`,
+                icalEvent: {
+                  filename: nombreArchivoIcs,
+                  method: 'REQUEST',
+                  content: icsContenido,
+                },
+                attachments: [
+                  {
+                    filename: nombreArchivoIcs,
+                    content: icsContenido,
+                    contentType: 'text/calendar; charset=utf-8; method=REQUEST',
+                  },
+                ],
+              });
+              for (const correo of correos) {
+                await guardarLog(rec.id, 'email', correo, 'ok');
+              }
+              res.email = true;
+            } catch (e) {
+              for (const correo of correos) {
+                await guardarLog(rec.id, 'email', correo, 'error', e.message);
+              }
+            }
+          }
+        }
+
+        // 3. Actualizar estado / recurrencia
+        if (rec.recurrencia && rec.recurrencia !== 'ninguna') {
+          const proximaFecha = calcularProximaFecha(rec.fecha_hora, rec.recurrencia);
+          await supabase
+            .from('recordatorios')
+            .update({ fecha_hora: proximaFecha, estado: 'pendiente' })
+            .eq('id', rec.id);
+        } else {
+          await supabase
+            .from('recordatorios')
+            .update({ estado: 'enviado' })
+            .eq('id', rec.id);
+        }
+
+        avisosEnviados.push(res);
+      }
     }
 
-    return new Response(JSON.stringify({ message: 'Procesado con éxito', total: resultados.length, resultados }), {
+    return new Response(JSON.stringify({
+      message: 'Procesado con éxito',
+      confirmaciones: confirmacionesEnviadas.length,
+      avisos: avisosEnviados.length,
+      detalles: { confirmacionesEnviadas, avisosEnviados },
+    }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });
