@@ -185,24 +185,10 @@ export default function App() {
   return (
     <div style={{ position: 'relative', zIndex: 1, minHeight: '100vh' }}>
 
-      {/* ─── Header ─── */}
-      <header style={{
-        background: 'rgba(13,11,30,0.85)',
-        backdropFilter: 'blur(20px)',
-        borderBottom: '1px solid rgba(255,255,255,0.08)',
-        padding: '20px 32px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        position: 'sticky', top: 0, zIndex: 100,
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-          <div style={{
-            width: 42, height: 42, borderRadius: 12,
-            background: 'linear-gradient(135deg, #7c3aed, #2563eb)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 20, boxShadow: '0 4px 16px rgba(124,58,237,0.5)',
-          }}>🔔</div>
+      {/* ─── Header Responsivo ─── */}
+      <header className="app-header">
+        <div className="app-header-brand">
+          <div className="app-header-icon">🔔</div>
           <div>
             <h1 style={{ fontSize: 20, fontWeight: 800, color: '#fff', lineHeight: 1.2 }}>
               Sistema de Recordatorios
@@ -212,7 +198,7 @@ export default function App() {
             </p>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div className="app-header-badges">
           {['pendiente','enviado'].map(e => (
             <span key={e} style={{
               padding: '4px 12px', borderRadius: 99, fontSize: 12, fontWeight: 600,
@@ -225,18 +211,12 @@ export default function App() {
         </div>
       </header>
 
-      {/* ─── Layout principal ─── */}
-      <main style={{
-        maxWidth: 1160, margin: '0 auto',
-        padding: '28px 20px',
-        display: 'grid',
-        gridTemplateColumns: 'minmax(320px, 400px) 1fr',
-        gap: 24, alignItems: 'start',
-      }}>
+      {/* ─── Layout principal Responsivo ─── */}
+      <main className="app-main">
 
         {/* ════ FORMULARIO ════ */}
-        <section className="glass-card" style={{ padding: 28 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
+        <section className="glass-card glass-card-form">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
             <span style={{ fontSize: 22 }}>➕</span>
             <h2 style={{ fontSize: 18, fontWeight: 700, color: '#fff' }}>Nuevo Recordatorio</h2>
           </div>
@@ -288,7 +268,7 @@ export default function App() {
               onChange={onChange}
             />
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div className="form-grid-row">
               <div>
                 <label className="field-label">Avisar con</label>
                 <select className="field-input" name="anticipacion" value={form.anticipacion} onChange={onChange}>
@@ -376,9 +356,9 @@ export default function App() {
         </section>
 
         {/* ════ LISTA ════ */}
-        <section className="glass-card" style={{ padding: 24 }}>
+        <section className="glass-card glass-card-list">
           {/* Cabecera lista */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18, flexWrap: 'wrap', gap: 10 }}>
             <h2 style={{ fontSize: 18, fontWeight: 700, color: '#fff' }}>📋 Mis Recordatorios</h2>
             <button className="btn-secondary" onClick={cargarLista} disabled={cargando}>
               {cargando ? '⏳' : '🔄 Actualizar'}
@@ -426,7 +406,7 @@ export default function App() {
           )}
 
           {/* Lista */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxHeight: '68vh', overflowY: 'auto', paddingRight: 4 }}>
+          <div className="rec-list-container">
             {lista.map((r, idx) => (
               <div
                 key={r.id}
@@ -437,9 +417,9 @@ export default function App() {
                   borderLeft: `3px solid ${ESTADO_CONFIG[r.estado]?.dot || '#a78bfa'}`,
                 }}
               >
-                {/* Cabecera item */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
-                  <div style={{ flex: 1 }}>
+                {/* Cabecera item responsiva */}
+                <div className="rec-item-header">
+                  <div className="rec-item-title-box">
                     <p style={{ fontWeight: 700, fontSize: 15, color: '#fff', marginBottom: r.descripcion ? 4 : 0 }}>
                       {r.titulo}
                     </p>
@@ -447,7 +427,7 @@ export default function App() {
                       <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.4 }}>{r.descripcion}</p>
                     )}
                   </div>
-                  <div style={{ display: 'flex', gap: 6, flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                  <div className="rec-item-badges">
                     <BadgeCanal canal={r.canal} />
                     <BadgeEstado estado={r.estado} />
                   </div>
@@ -472,8 +452,8 @@ export default function App() {
                   )}
                 </div>
 
-                {/* Destinatarios pequeños */}
-                <div style={{ marginTop: 8, fontSize: 12, color: 'var(--text-muted)', opacity: 0.75 }}>
+                {/* Destinatarios */}
+                <div className="rec-item-recipients" style={{ marginTop: 8, fontSize: 12, color: 'var(--text-muted)', opacity: 0.75 }}>
                   {r.destinatario_email && <span>📧 {r.destinatario_email}</span>}
                   {r.destinatario_wa    && <span style={{ marginLeft: 10 }}>📱 {r.destinatario_wa}</span>}
                 </div>

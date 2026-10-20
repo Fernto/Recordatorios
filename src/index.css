@@ -279,4 +279,224 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
 }
 
 /* ── Hint ─────────────────────────────────────────────────────── */
-.hint { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+.hint { font-size: 11px; color: var(--text-muted); margin-top: 4px; word-break: break-word; }
+
+/* ── Layout Responsivo ────────────────────────────────────────── */
+.app-header {
+  background: rgba(13,11,30,0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  padding: 18px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  gap: 16px;
+}
+
+.app-header-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.app-header-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #7c3aed, #2563eb);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  box-shadow: 0 4px 16px rgba(124,58,237,0.5);
+  flex-shrink: 0;
+}
+
+.app-header-badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.app-main {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 28px 20px;
+  display: grid;
+  grid-template-columns: minmax(320px, 410px) 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.glass-card-form {
+  padding: 28px;
+}
+
+.glass-card-list {
+  padding: 24px;
+}
+
+.form-grid-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.rec-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 68vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.rec-item {
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.rec-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.rec-item-title-box {
+  flex: 1;
+  min-width: 0;
+}
+
+.rec-item-badges {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+/* ── Media Queries: Tablets y Móviles (< 880px) ───────────────── */
+@media (max-width: 880px) {
+  .app-header {
+    padding: 14px 20px;
+  }
+
+  .app-main {
+    grid-template-columns: 1fr;
+    padding: 20px 14px;
+    gap: 20px;
+  }
+
+  .glass-card-form {
+    padding: 22px 18px;
+  }
+
+  .glass-card-list {
+    padding: 20px 16px;
+  }
+
+  .rec-list-container {
+    max-height: none;
+    overflow-y: visible;
+    padding-right: 0;
+  }
+}
+
+/* ── Media Queries: Móviles (< 560px) ─────────────────────────── */
+@media (max-width: 560px) {
+  .app-header {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 12px 14px;
+    gap: 10px;
+  }
+
+  .app-header-brand {
+    gap: 10px;
+  }
+
+  .app-header-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
+  }
+
+  .app-header h1 {
+    font-size: 17px !important;
+  }
+
+  .app-header-badges {
+    justify-content: flex-start;
+  }
+
+  .app-main {
+    padding: 14px 10px;
+    gap: 16px;
+  }
+
+  .glass-card-form,
+  .glass-card-list {
+    padding: 16px 14px;
+    border-radius: 14px;
+  }
+
+  .form-grid-row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .canal-toggle {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .canal-btn {
+    padding: 11px 12px;
+    font-size: 13.5px;
+  }
+
+  .field-input {
+    font-size: 15px; /* Evita zoom automático en Safari iOS */
+    padding: 11px 12px;
+  }
+
+  .btn-primary {
+    padding: 14px;
+    font-size: 15px;
+  }
+
+  .filter-tabs {
+    gap: 5px;
+  }
+
+  .filter-tab {
+    padding: 6px 12px;
+    font-size: 11.5px;
+  }
+
+  .rec-item-header {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .rec-item-badges {
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  .rec-item-recipients {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .rec-item-recipients span {
+    margin-left: 0 !important;
+  }
+}
+
