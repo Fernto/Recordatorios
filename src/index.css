@@ -1,0 +1,282 @@
+/* src/index.css — Sistema de Recordatorios · Premium Dark Theme */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+/* ── Variables ────────────────────────────────────────────────── */
+:root {
+  --bg-from:   #0d0b1e;
+  --bg-mid:    #1a1535;
+  --bg-to:     #0d1b2a;
+  --glass:     rgba(255,255,255,0.06);
+  --glass-hov: rgba(255,255,255,0.10);
+  --border:    rgba(255,255,255,0.10);
+  --border-hov:rgba(255,255,255,0.20);
+  --purple:    #a78bfa;
+  --blue:      #60a5fa;
+  --emerald:   #34d399;
+  --amber:     #fbbf24;
+  --red:       #f87171;
+  --text:      #f1f5f9;
+  --text-muted:#94a3b8;
+  --radius:    16px;
+  --shadow:    0 8px 32px rgba(0,0,0,0.40);
+}
+
+/* ── Reset ────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  background: linear-gradient(135deg, var(--bg-from) 0%, var(--bg-mid) 50%, var(--bg-to) 100%);
+  min-height: 100vh;
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Fondo animado con partículas */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 20% 20%, rgba(167,139,250,0.12) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 80%, rgba(96,165,250,0.10) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Scrollbar personalizado ──────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: rgba(255,255,255,0.03); }
+::-webkit-scrollbar-thumb { background: rgba(167,139,250,0.4); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(167,139,250,0.7); }
+
+/* ── Animaciones ──────────────────────────────────────────────── */
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes pulse-ring {
+  0%   { transform: scale(1);   opacity: 0.8; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50%       { background-position: 100% 50%; }
+}
+
+/* ── Glass Card ───────────────────────────────────────────────── */
+.glass-card {
+  background: var(--glass);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  animation: fadeSlideUp 0.4s ease both;
+}
+
+/* ── Inputs ───────────────────────────────────────────────────── */
+.field-input {
+  width: 100%;
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--text);
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+  outline: none;
+}
+.field-input::placeholder { color: var(--text-muted); }
+.field-input:focus {
+  border-color: var(--purple);
+  background: rgba(167,139,250,0.08);
+  box-shadow: 0 0 0 3px rgba(167,139,250,0.18);
+}
+.field-input option { background: #1a1535; color: #f1f5f9; }
+
+/* datetime-local color fix */
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  filter: invert(1) opacity(0.5);
+  cursor: pointer;
+}
+
+/* ── Botón primario ───────────────────────────────────────────── */
+.btn-primary {
+  width: 100%;
+  padding: 13px;
+  background: linear-gradient(135deg, #7c3aed, #2563eb);
+  background-size: 200% 200%;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.2s, opacity 0.2s;
+  box-shadow: 0 4px 20px rgba(124,58,237,0.45);
+  animation: gradientShift 4s ease infinite;
+  letter-spacing: 0.3px;
+}
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(124,58,237,0.55);
+}
+.btn-primary:active:not(:disabled) { transform: translateY(0); }
+.btn-primary:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* ── Botón secundario ─────────────────────────────────────────── */
+.btn-secondary {
+  padding: 7px 16px;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-secondary:hover { background: var(--glass-hov); color: var(--text); border-color: var(--border-hov); }
+
+/* ── Botón cancelar item ──────────────────────────────────────── */
+.btn-cancel-item {
+  padding: 4px 12px;
+  background: transparent;
+  border: 1px solid rgba(248,113,113,0.35);
+  color: var(--red);
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-cancel-item:hover { background: rgba(248,113,113,0.12); border-color: var(--red); }
+
+/* ── Canal toggle ─────────────────────────────────────────────── */
+.canal-toggle { display: flex; gap: 8px; }
+.canal-btn {
+  flex: 1;
+  padding: 9px 10px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-family: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+.canal-btn:hover { background: var(--glass-hov); color: var(--text); }
+.canal-btn.active {
+  background: rgba(167,139,250,0.15);
+  border-color: var(--purple);
+  color: var(--purple);
+  font-weight: 600;
+  box-shadow: 0 0 12px rgba(167,139,250,0.2);
+}
+
+/* ── Filtros de lista ─────────────────────────────────────────── */
+.filter-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+.filter-tab {
+  padding: 5px 14px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  font-size: 12px;
+  font-family: inherit;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.filter-tab:hover { background: var(--glass-hov); color: var(--text); }
+.filter-tab.active {
+  background: rgba(167,139,250,0.18);
+  border-color: var(--purple);
+  color: var(--purple);
+  font-weight: 600;
+}
+
+/* ── Item recordatorio ────────────────────────────────────────── */
+.rec-item {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  padding: 14px 16px;
+  transition: border-color 0.2s, background 0.2s, transform 0.15s;
+  animation: fadeSlideUp 0.3s ease both;
+}
+.rec-item:hover {
+  background: rgba(255,255,255,0.07);
+  border-color: rgba(255,255,255,0.15);
+  transform: translateY(-1px);
+}
+
+/* ── Spinner ──────────────────────────────────────────────────── */
+.spinner {
+  width: 18px; height: 18px;
+  border: 2px solid rgba(255,255,255,0.2);
+  border-top-color: #fff;
+  border-radius: 50%;
+  display: inline-block;
+  animation: spin 0.7s linear infinite;
+  vertical-align: middle;
+  margin-right: 8px;
+}
+
+/* ── Skeleton loading ─────────────────────────────────────────── */
+.skeleton {
+  background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.10) 50%, rgba(255,255,255,0.05) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+
+/* ── Label ────────────────────────────────────────────────────── */
+.field-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 6px;
+  margin-top: 14px;
+}
+
+/* ── Alert ────────────────────────────────────────────────────── */
+.alert {
+  padding: 11px 14px;
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-weight: 500;
+  animation: fadeIn 0.2s ease;
+}
+.alert-ok  { background: rgba(52,211,153,0.12); border: 1px solid rgba(52,211,153,0.30); color: var(--emerald); }
+.alert-err { background: rgba(248,113,113,0.12); border: 1px solid rgba(248,113,113,0.30); color: var(--red); }
+
+/* ── Divider ──────────────────────────────────────────────────── */
+.divider {
+  height: 1px;
+  background: var(--border);
+  margin: 18px 0;
+}
+
+/* ── Hint ─────────────────────────────────────────────────────── */
+.hint { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
