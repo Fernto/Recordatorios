@@ -8,7 +8,7 @@ Guía técnica, arquitectura y contexto operativo del proyecto **Recordatorios**
 
 Aplicación full-stack para crear, programar y despachar recordatorios por **correo electrónico** y **WhatsApp**.
 
-1. **Frontend SPA (React + Vite)**: formulario, listado, filtros y cancelación. Estética *dark glassmorphism*. Habla **directamente** con Supabase (no hay API propia de CRUD).
+1. **Frontend SPA (React + Vite)**: formulario, listado, filtros y cancelación. Interfaz oscura de alto contraste con un único acento índigo (sistema de diseño *Ink & Indigo*, ver sección 10). Habla **directamente** con Supabase (no hay API propia de CRUD).
 2. **Supabase (PostgreSQL)**: tabla `recordatorios`, tabla `logs_envios` y la vista `v_recordatorios_pendientes`.
 3. **Motor de envío**: una sola implementación (`worker.mjs` + `mailer.mjs`) ejecutada desde dos sitios intercambiables:
    - `cron.mjs`, proceso Node continuo (VPS / Render / Railway).
@@ -67,8 +67,8 @@ Recordatorios/
 ├── vite.config.js           # Vite + middleware de dev para /api/send-confirmation
 └── src/
     ├── api.js               # Acceso a Supabase + disparo de la confirmación
-    ├── App.jsx              # Formulario, lista, filtros y badges
-    ├── index.css            # Variables CSS, glassmorphism, responsive
+    ├── App.jsx              # Vistas, iconos SVG y estados de la interfaz
+    ├── index.css            # Sistema de diseño: tokens, componentes, responsive y a11y
     ├── main.jsx             # Entrada de React
     └── supabase.js          # Cliente Supabase del navegador (sin credenciales embebidas)
 ```
@@ -252,7 +252,38 @@ Ejecuta un ciclo completo. Si `CRON_SECRET` está definido, exige `Authorization
 
 ---
 
-## 🌍 10. Despliegue
+## 🎨 10. Interfaz y sistema de diseño
+
+Estética **"Ink & Indigo"**: neutro oscuro casi negro, superficies escalonadas y un único acento índigo. Sin degradados morados ni glassmorphism pesado; el `blur` de fondo se limita al header por rendimiento.
+
+### Paleta (`:root` de `src/index.css`)
+
+| Token | Valor | Uso |
+|---|---|---|
+| `--bg` | `#0b0c0f` | Fondo de la página |
+| `--surface` / `--surface-2` / `--surface-3` | `#101218` / `#161a22` / `#1d222c` | Tarjeta / items e inputs / hover y foco |
+| `--line` / `--line-strong` | `rgba(255,255,255,.075)` / `.15` | Bordes base y de énfasis |
+| `--text` / `--text-dim` / `--text-faint` | `#e9ebf0` / `#99a1b0` / `#6b7280` | Jerarquía tipográfica |
+| `--accent` / `--accent-2` | `#8aa4ff` / `#5b7cfa` | CTA, foco y filtro activo |
+| `--amber` / `--mint` / `--rose` / `--slate` | `#fbbf24` / `#34d399` / `#fb7185` / `#94a3b8` | Pendiente / Enviado / Cancelado / Vencido |
+
+### Reglas
+
+- **Todo color sale de un token.** No se escriben hex sueltos en `App.jsx`: los estados se resuelven con clases (`.badge--pendiente`, `.badge--enviado`, …) o con `var(--token)`.
+- **Tipografía**: Inter; títulos con tracking `-0.01em`; etiquetas `12.5px/600`; micro-títulos de sección en `10.5px` mayúsculas con `letter-spacing .1em` y una línea degradada a la derecha. Números tabulares (`font-variant-numeric`) en fechas y contadores.
+- **Iconografía**: SVG de trazo 24×24 dentro del componente `Icono` (`TRAZOS` en `App.jsx`). Sin librería externa y sin emoji como icono funcional. Para añadir uno: agrega el path a `TRAZOS` y úsalo con `name`.
+- **Componentes** (todos definidos en `index.css`): `.card` / `.card-head`, `.section-title`, `.field` + `.input` / `.select`, `.segmented` (canal), `.btn-primary`, `.btn-ghost`, `.btn-cancel`, `.badge` / `.badge-canal`, `.chip` (filtros), `.rec-item`, `.alert`, `.empty`, `.skeleton`.
+- **Profundidad**: radios 9 / 12 / 16 / 20 px según nivel y sombras en dos capas (contacto + elevación difusa). Nada de sombras de color saturado.
+- **Estados interactivos**: el hover sube el borde a `--line-strong`; el foco usa `:focus-visible` (outline índigo de 2 px) además del anillo interior de los inputs.
+- **Responsive**: una columna por debajo de 900 px; en móvil (≤600 px) el segmentado del canal pasa a vertical, los inputs suben a `16px` para evitar el zoom de iOS y el subtítulo del header se oculta.
+- **Accesibilidad**: `aria-pressed` en el canal, `role="tab"` + `aria-selected` en los filtros, `role="status"` / `role="alert"` en los mensajes, `aria-label` en botones de solo icono y respeto a `prefers-reduced-motion`.
+- **Rendimiento**: solo el header usa `backdrop-filter`; el resto de superficies son sólidas para no encadenar blur.
+
+Si cambias la paleta, hazlo **solo** en `:root`: badges, alertas y el riel de estado de la lista heredan de ahí. El riel izquierdo de cada recordatorio se deriva de `estado` en `App.jsx`, así que un estado nuevo necesita token, clase `.badge--<estado>` y entrada en `ESTADO_CONFIG`.
+
+---
+
+## 🌍 11. Despliegue
 
 **Netlify**
 - `netlify.toml`: `command = "npm run build"`, `publish = "dist"`, `functions = "netlify/functions"`, `node_bundler = "esbuild"`.
@@ -269,7 +300,7 @@ Ejecuta un ciclo completo. Si `CRON_SECRET` está definido, exige `Authorization
 
 ---
 
-## 🔐 11. Seguridad — estado y pendientes
+## 🔐 12. Seguridad — estado y pendientes
 
 **Hecho**
 - Sin credenciales en el código: la App Password de Gmail y la anon key hardcodeadas se eliminaron; ahora todo viene del entorno (`.env` / variables del sitio).
@@ -284,7 +315,7 @@ Ejecuta un ciclo completo. Si `CRON_SECRET` está definido, exige `Authorization
 
 ---
 
-## 💡 12. Notas para futuros agentes
+## 💡 13. Notas para futuros agentes
 
 1. **No dupliques** envío, plantillas ni recurrencias: extiende `mailer.mjs` / `worker.mjs`.
 2. **No metas credenciales** en el código ni en `src/`. Usa `.env` (local) o variables del sitio.
@@ -292,4 +323,6 @@ Ejecuta un ciclo completo. Si `CRON_SECRET` está definido, exige `Authorization
 4. Toda llamada al endpoint debe mandar **solo el `id`**; el servidor decide destinatarios y contenido.
 5. Al tocar el `.ics`: `RRULE` va en su propia línea y el evento se manda con `icalEvent` (no como adjunto duplicado).
 6. Al tocar la vista SQL, mantén la ventana de 1 hora alineada con `VENTANA_GRACIA_MS`.
-7. Si añades un estado a `estado`, actualiza el `CHECK`, `ESTADO_CONFIG` en `App.jsx` y los filtros.
+7. Si añades un estado a `estado`, actualiza el `CHECK`, `ESTADO_CONFIG` en `App.jsx`, la clase `.badge--<estado>` en `index.css` y `FILTROS`.
+8. Antes de tocar la estética, revisa la sección 10: la paleta vive en `:root` y los componentes ya existen. Evita volver a estilos inline con colores literales.
+9. Los iconos son SVG propios (`TRAZOS`). No introduzcas una librería de iconos ni emoji nuevos para acciones.
