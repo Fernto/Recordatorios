@@ -3,6 +3,11 @@
   publish = "dist"
   functions = "netlify/functions"
 
+# esbuild empaqueta también los módulos compartidos (db.mjs, mailer.mjs, worker.mjs)
+# que viven fuera de netlify/functions.
+[functions]
+  node_bundler = "esbuild"
+
 [[redirects]]
   from = "/api/send-confirmation"
   to = "/.netlify/functions/send-confirmation"
