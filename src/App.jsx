@@ -59,6 +59,7 @@ const ESTADO_CONFIG = {
   pendiente: { color: '#fbbf24', bg: 'rgba(251,191,36,0.15)',  label: 'Pendiente', dot: '#fbbf24' },
   enviado:   { color: '#34d399', bg: 'rgba(52,211,153,0.15)', label: 'Enviado',   dot: '#34d399' },
   cancelado: { color: '#f87171', bg: 'rgba(248,113,113,0.15)',label: 'Cancelado', dot: '#f87171' },
+  vencido:   { color: '#94a3b8', bg: 'rgba(148,163,184,0.15)',label: 'Vencido',   dot: '#94a3b8' },
 };
 
 function BadgeEstado({ estado }) {
@@ -102,14 +103,23 @@ export default function App() {
   const [cargando,      setCargando]      = useState(true);
   const [msgExito,      setMsgExito]      = useState('');
   const [msgError,      setMsgError]      = useState('');
+  const [msgLista,      setMsgLista]      = useState('');
   const [filtro,        setFiltro]        = useState('todos');
 
   /* ── Cargar lista ── */
   const cargarLista = useCallback(async () => {
     setCargando(true);
-    const data = await listarRecordatorios();
-    setRecordatorios(data);
-    setCargando(false);
+    try {
+      const data = await listarRecordatorios();
+      setRecordatorios(data);
+      setMsgLista('');
+    } catch (err) {
+      console.error(err);
+      setMsgLista(err.message || 'No se pudieron cargar los recordatorios.');
+      setRecordatorios([]);
+    } finally {
+      setCargando(false);
+    }
   }, []);
 
   useEffect(() => { cargarLista(); }, [cargarLista]);
@@ -179,6 +189,7 @@ export default function App() {
     pendiente: recordatorios.filter(r => r.estado === 'pendiente').length,
     enviado:   recordatorios.filter(r => r.estado === 'enviado').length,
     cancelado: recordatorios.filter(r => r.estado === 'cancelado').length,
+    vencido:   recordatorios.filter(r => r.estado === 'vencido').length,
   };
 
   /* ── Render ── */
@@ -369,6 +380,10 @@ export default function App() {
             </button>
           </div>
 
+          {msgLista && (
+            <div className="alert alert-err" style={{ marginBottom: 14 }}>{msgLista}</div>
+          )}
+
           {/* Filtros */}
           <div className="filter-tabs" style={{ marginBottom: 18 }}>
             {[
@@ -376,6 +391,7 @@ export default function App() {
               { key: 'pendiente', label: `⏳ Pendientes (${conteo.pendiente})` },
               { key: 'enviado',   label: `✅ Enviados (${conteo.enviado})` },
               { key: 'cancelado', label: `❌ Cancelados (${conteo.cancelado})` },
+              { key: 'vencido',   label: `⌛ Vencidos (${conteo.vencido})` },
             ].map(f => (
               <button
                 key={f.key}

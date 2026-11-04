@@ -3,8 +3,8 @@ import { supabase } from './supabase';
 
 // ─── CREAR RECORDATORIO ─────────────────────────────────────────────────────
 /**
- * Inserta un nuevo recordatorio directamente en Supabase.
- * Ya no usamos webhooks (n8n/Make).
+ * Inserta un nuevo recordatorio en Supabase y pide el correo de confirmación.
+ * El endpoint recibe solo el id: el contenido se lee de la base de datos.
  * @param {Object} recordatorio
  * @returns {Promise<Object>}
  */
@@ -14,23 +14,27 @@ export async function crearRecordatorio(recordatorio) {
     .insert([{
       ...recordatorio,
       estado: 'pendiente',
-      confirmacion_enviada: false
+      confirmacion_enviada: false,
     }])
     .select();
 
   if (error) throw new Error(`Error al crear en Supabase: ${error.message}`);
   const nuevo = data?.[0];
 
-  // Despacho inmediato del correo de confirmación (funciona en dev y en producción)
-  if (nuevo) {
+  // Despacho inmediato de la confirmación. Si falla, el worker la envía en su
+  // siguiente ciclo (la marca sigue en false), así que no se pierde.
+  if (nuevo?.id) {
     try {
-      await fetch('/api/send-confirmation', {
+      const resp = await fetch('/api/send-confirmation', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(nuevo),
+        body: JSON.stringify({ id: nuevo.id }),
       });
-    } catch (errConfirm) {
-      console.warn('⚠️ Envío inmediato diferido al cron:', errConfirm);
+      if (!resp.ok) {
+        console.warn(`⚠️ Confirmación diferida al worker (HTTP ${resp.status}).`);
+      }
+    } catch (err) {
+      console.warn('⚠️ Confirmación diferida al worker:', err.message);
     }
   }
 
@@ -39,28 +43,23 @@ export async function crearRecordatorio(recordatorio) {
 
 // ─── LISTAR RECORDATORIOS ───────────────────────────────────────────────────
 /**
- * Obtiene todos los recordatorios directamente desde Supabase.
- * Ordenados por fecha de creación descendente.
+ * Obtiene todos los recordatorios desde Supabase, del más reciente al más viejo.
+ * Lanza si hay error: la interfaz debe poder avisar en vez de mostrar una lista vacía.
  * @returns {Promise<Array>}
  */
 export async function listarRecordatorios() {
-  try {
-    const { data, error } = await supabase
-      .from('recordatorios')
-      .select('*')
-      .order('created_at', { ascending: false });
+  const { data, error } = await supabase
+    .from('recordatorios')
+    .select('*')
+    .order('created_at', { ascending: false });
 
-    if (error) throw error;
-    return data || [];
-  } catch (e) {
-    console.error('listarRecordatorios: error en Supabase', e.message);
-    return [];
-  }
+  if (error) throw new Error(`No se pudieron cargar los recordatorios: ${error.message}`);
+  return data || [];
 }
 
 // ─── CANCELAR / ACTUALIZAR RECORDATORIO ────────────────────────────────────
 /**
- * Actualiza el estado de un recordatorio directamente en Supabase.
+ * Actualiza el estado de un recordatorio en Supabase.
  * @param {string} id - UUID del recordatorio
  * @param {Object} cambios - ej: { estado: 'cancelado' }
  * @returns {Promise<Object>}
