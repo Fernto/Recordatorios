@@ -1,4 +1,4 @@
-/* src/App.jsx — Premium Dark UI */
+/* src/App.jsx — Interfaz del Sistema de Recordatorios */
 import { useState, useEffect, useCallback } from 'react';
 import { crearRecordatorio, listarRecordatorios, actualizarRecordatorio } from './api';
 
@@ -12,10 +12,24 @@ const ANTICIPACION_OPCIONES = [
 ];
 
 const RECURRENCIA_OPCIONES = [
-  { label: 'Sin repetición', value: 'ninguna'  },
-  { label: 'Diario',         value: 'diario'   },
-  { label: 'Semanal',        value: 'semanal'  },
-  { label: 'Mensual',        value: 'mensual'  },
+  { label: 'Sin repetición', value: 'ninguna' },
+  { label: 'Diario',         value: 'diario'  },
+  { label: 'Semanal',        value: 'semanal' },
+  { label: 'Mensual',        value: 'mensual' },
+];
+
+const CANAL_OPCIONES = [
+  { val: 'email',    label: 'Email',    icon: 'mail'   },
+  { val: 'whatsapp', label: 'WhatsApp', icon: 'phone'  },
+  { val: 'ambos',    label: 'Ambos',    icon: 'layers' },
+];
+
+const FILTROS = [
+  { key: 'todos',     label: 'Todos'      },
+  { key: 'pendiente', label: 'Pendientes' },
+  { key: 'enviado',   label: 'Enviados'   },
+  { key: 'cancelado', label: 'Cancelados' },
+  { key: 'vencido',   label: 'Vencidos'   },
 ];
 
 const EMAIL_DEFAULT = 'vikitomas1453@gmail.com';
@@ -31,6 +45,102 @@ const FORM_INICIAL = {
   destinatario_email: EMAIL_DEFAULT,
 };
 
+/* ── Iconos (trazo 24x24) ─────────────────────────────────────── */
+const TRAZOS = {
+  bell: (
+    <>
+      <path d="M18 8.5a6 6 0 1 0-12 0c0 6.5-2.5 8.5-2.5 8.5h17S18 15 18 8.5" />
+      <path d="M13.7 20.5a2 2 0 0 1-3.4 0" />
+    </>
+  ),
+  plus:     <path d="M12 5v14M5 12h14" />,
+  calendar: (
+    <>
+      <rect x="3" y="5" width="18" height="16" rx="2.5" />
+      <path d="M8 2.5v4M16 2.5v4M3 10h18" />
+    </>
+  ),
+  clock: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7.2V12l3.2 1.9" />
+    </>
+  ),
+  repeat: (
+    <>
+      <path d="m17 2.5 3.5 3.5L17 9.5" />
+      <path d="M3 11.5V9a3 3 0 0 1 3-3h14.5" />
+      <path d="m7 21.5-3.5-3.5L7 14.5" />
+      <path d="M21 12.5V15a3 3 0 0 1-3 3H3.5" />
+    </>
+  ),
+  mail: (
+    <>
+      <rect x="2.5" y="4.5" width="19" height="15" rx="2.5" />
+      <path d="m3.5 7 8.5 6 8.5-6" />
+    </>
+  ),
+  phone: (
+    <>
+      <rect x="6" y="2.5" width="12" height="19" rx="2.8" />
+      <path d="M10.6 18.2h2.8" />
+    </>
+  ),
+  layers: (
+    <>
+      <path d="m12 2.8 9 4.7-9 4.7-9-4.7 9-4.7Z" />
+      <path d="m3 12.6 9 4.7 9-4.7" />
+      <path d="m3 17 9 4.7 9-4.7" />
+    </>
+  ),
+  refresh: (
+    <>
+      <path d="M20.5 12a8.5 8.5 0 1 1-2.9-6.4" />
+      <path d="M20.5 3.5v5h-5" />
+    </>
+  ),
+  close:    <path d="M18 6 6 18M6 6l12 12" />,
+  check:    <path d="m20 6.5-10.5 11L4 12" />,
+  alert: (
+    <>
+      <path d="M10.6 3.9 2.4 18a1.7 1.7 0 0 0 1.5 2.6h16.2A1.7 1.7 0 0 0 21.6 18L13.4 3.9a1.7 1.7 0 0 0-2.8 0Z" />
+      <path d="M12 9v4.2M12 16.8h.01" />
+    </>
+  ),
+  inbox: (
+    <>
+      <path d="M3.5 13.5h4l1.6 2.6h5.8l1.6-2.6h4" />
+      <path d="M3.5 13.5 6.3 5.6A2 2 0 0 1 8.2 4.2h7.6a2 2 0 0 1 1.9 1.4l2.8 7.9v4.6a2 2 0 0 1-2 2H5.5a2 2 0 0 1-2-2z" />
+    </>
+  ),
+  sparkle: (
+    <>
+      <path d="M12 3v6M12 15v6M3 12h6M15 12h6" />
+      <path d="m6.3 6.3 3 3M14.7 14.7l3 3M17.7 6.3l-3 3M9.3 14.7l-3 3" />
+    </>
+  ),
+};
+
+function Icono({ name, size = 15 }) {
+  return (
+    <svg
+      className="icon"
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.85"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      {TRAZOS[name]}
+    </svg>
+  );
+}
+
 /* ── Helpers ──────────────────────────────────────────────────── */
 function fmtFecha(iso) {
   if (!iso) return '—';
@@ -45,9 +155,20 @@ function tiempoRelativo(iso) {
   const hrs  = Math.floor(abs / 3600000);
   const days = Math.floor(abs / 86400000);
   const past = diff < 0;
-  if (mins < 60)  return past ? `hace ${mins}m`       : `en ${mins}m`;
-  if (hrs  < 24)  return past ? `hace ${hrs}h`         : `en ${hrs}h`;
+  if (mins < 1)   return past ? 'ahora'          : 'en menos de 1m';
+  if (mins < 60)  return past ? `hace ${mins}m`  : `en ${mins}m`;
+  if (hrs  < 24)  return past ? `hace ${hrs}h`   : `en ${hrs}h`;
   return past ? `hace ${days}d` : `en ${days}d`;
+}
+
+function fmtAnticipacion(min) {
+  if (min < 60)   return `${min} min antes`;
+  if (min === 1440) return '1 día antes';
+  return `${min / 60} h antes`;
+}
+
+function capitalizar(str) {
+  return str ? str.charAt(0).toUpperCase() + str.slice(1) : '';
 }
 
 function parsearLista(str) {
@@ -56,41 +177,30 @@ function parsearLista(str) {
 
 /* ── Badges ───────────────────────────────────────────────────── */
 const ESTADO_CONFIG = {
-  pendiente: { color: '#fbbf24', bg: 'rgba(251,191,36,0.15)',  label: 'Pendiente', dot: '#fbbf24' },
-  enviado:   { color: '#34d399', bg: 'rgba(52,211,153,0.15)', label: 'Enviado',   dot: '#34d399' },
-  cancelado: { color: '#f87171', bg: 'rgba(248,113,113,0.15)',label: 'Cancelado', dot: '#f87171' },
-  vencido:   { color: '#94a3b8', bg: 'rgba(148,163,184,0.15)',label: 'Vencido',   dot: '#94a3b8' },
+  pendiente: { label: 'Pendiente' },
+  enviado:   { label: 'Enviado'   },
+  cancelado: { label: 'Cancelado' },
+  vencido:   { label: 'Vencido'   },
 };
 
+const CANAL_LABEL = { email: 'Email', whatsapp: 'WhatsApp', ambos: 'Ambos' };
+const CANAL_ICON  = { email: 'mail',  whatsapp: 'phone',    ambos: 'layers' };
+
 function BadgeEstado({ estado }) {
-  const c = ESTADO_CONFIG[estado] || ESTADO_CONFIG.pendiente;
+  const cfg = ESTADO_CONFIG[estado] || ESTADO_CONFIG.pendiente;
   return (
-    <span style={{
-      display: 'inline-flex', alignItems: 'center', gap: 5,
-      background: c.bg, color: c.color,
-      padding: '3px 10px', borderRadius: 99,
-      fontSize: 12, fontWeight: 600,
-      border: `1px solid ${c.color}44`,
-    }}>
-      <span style={{
-        width: 6, height: 6, borderRadius: '50%',
-        background: c.dot, flexShrink: 0,
-      }} />
-      {c.label}
+    <span className={`badge badge--${ESTADO_CONFIG[estado] ? estado : 'pendiente'}`}>
+      <span className="badge-dot" />
+      {cfg.label}
     </span>
   );
 }
 
 function BadgeCanal({ canal }) {
-  const map = { ambos: '📱 + 📧', whatsapp: '📱 WA', email: '📧 Email' };
   return (
-    <span style={{
-      fontSize: 12, color: 'var(--text-muted)',
-      background: 'rgba(255,255,255,0.06)',
-      padding: '2px 8px', borderRadius: 99,
-      border: '1px solid rgba(255,255,255,0.10)',
-    }}>
-      {map[canal] || canal}
+    <span className="badge-canal">
+      <Icono name={CANAL_ICON[canal] || 'mail'} size={12} />
+      {CANAL_LABEL[canal] || canal}
     </span>
   );
 }
@@ -159,11 +269,11 @@ export default function App() {
         fecha_hora:   new Date(form.fecha_hora).toISOString(),
         anticipacion: Number(form.anticipacion),
       });
-      setMsgExito('✅ ¡Recordatorio programado! Te enviamos un correo de confirmación.');
+      setMsgExito('Recordatorio programado. Te enviamos un correo de confirmación.');
       setForm(FORM_INICIAL);
       cargarLista();
     } catch (err) {
-      setMsgError('❌ Error al crear el recordatorio. Intenta de nuevo.');
+      setMsgError('Error al crear el recordatorio. Intenta de nuevo.');
       console.error(err);
     } finally {
       setEnviando(false);
@@ -192,109 +302,141 @@ export default function App() {
     vencido:   recordatorios.filter(r => r.estado === 'vencido').length,
   };
 
+  const nombreFiltro = (FILTROS.find(f => f.key === filtro) || FILTROS[0]).label.toLowerCase();
+
   /* ── Render ── */
   return (
-    <div style={{ position: 'relative', zIndex: 1, minHeight: '100vh' }}>
+    <div className="app">
 
-      {/* ─── Header Responsivo ─── */}
+      {/* ─── Header ─── */}
       <header className="app-header">
-        <div className="app-header-brand">
-          <div className="app-header-icon">🔔</div>
-          <div>
-            <h1 style={{ fontSize: 20, fontWeight: 800, color: '#fff', lineHeight: 1.2 }}>
-              Sistema de Recordatorios
-            </h1>
-            <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
-              Notificaciones por WhatsApp y correo electrónico
-            </p>
+        <div className="brand">
+          <span className="brand-icon"><Icono name="bell" size={18} /></span>
+          <div className="brand-text">
+            <h1>Sistema de Recordatorios</h1>
+            <p>Avisos por correo y WhatsApp</p>
           </div>
         </div>
-        <div className="app-header-badges">
-          {['pendiente','enviado'].map(e => (
-            <span key={e} style={{
-              padding: '4px 12px', borderRadius: 99, fontSize: 12, fontWeight: 600,
-              background: ESTADO_CONFIG[e].bg, color: ESTADO_CONFIG[e].color,
-              border: `1px solid ${ESTADO_CONFIG[e].color}44`,
-            }}>
-              {conteo[e]} {e}s
-            </span>
-          ))}
+
+        <div className="header-stats">
+          <span className="stat">
+            <span className="stat-dot" style={{ background: 'var(--amber)' }} />
+            <strong>{conteo.pendiente}</strong>
+            <span className="stat-label">pendientes</span>
+          </span>
+          <span className="stat">
+            <span className="stat-dot" style={{ background: 'var(--mint)' }} />
+            <strong>{conteo.enviado}</strong>
+            <span className="stat-label">enviados</span>
+          </span>
         </div>
       </header>
 
-      {/* ─── Layout principal Responsivo ─── */}
       <main className="app-main">
 
         {/* ════ FORMULARIO ════ */}
-        <section className="glass-card glass-card-form">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
-            <span style={{ fontSize: 22 }}>➕</span>
-            <h2 style={{ fontSize: 18, fontWeight: 700, color: '#fff' }}>Nuevo Recordatorio</h2>
+        <section className="card card--form">
+          <div className="card-head">
+            <span className="card-head-icon"><Icono name="plus" size={16} /></span>
+            <div className="card-head-text">
+              <h2>Nuevo recordatorio</h2>
+              <p>Programa un aviso en menos de un minuto</p>
+            </div>
           </div>
 
-          {msgExito && <div className="alert alert-ok" style={{ marginBottom: 16 }}>{msgExito}</div>}
-          {msgError && <div className="alert alert-err" style={{ marginBottom: 16 }}>{msgError}</div>}
+          {msgExito && (
+            <div className="alert alert--ok" role="status" aria-live="polite">
+              <Icono name="check" size={15} />
+              <span>{msgExito}</span>
+            </div>
+          )}
+          {msgError && (
+            <div className="alert alert--err" role="alert" aria-live="assertive">
+              <Icono name="alert" size={15} />
+              <span>{msgError}</span>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit}>
 
-            {/* Sección 1 — Info del evento */}
-            <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--purple)', marginBottom: 10 }}>
-              📌 Información del evento
-            </p>
+            {/* Sección 1 — Evento */}
+            <p className="section-title"><Icono name="sparkle" size={12} />Evento</p>
 
-            <label className="field-label">Título *</label>
-            <input
-              className="field-input"
-              name="titulo"
-              value={form.titulo}
-              onChange={onChange}
-              placeholder="Ej: Llamada con el doctor"
-              autoComplete="off"
-              data-gramm="false"
-              data-enable-grammarly="false"
-            />
+            <div className="field">
+              <label className="field-label" htmlFor="titulo">
+                Título <span className="req">*</span>
+              </label>
+              <input
+                id="titulo"
+                className="input"
+                name="titulo"
+                value={form.titulo}
+                onChange={onChange}
+                placeholder="Ej. Llamada con el doctor"
+                autoComplete="off"
+                data-gramm="false"
+                data-enable-grammarly="false"
+              />
+            </div>
 
-            <label className="field-label">Descripción <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(opcional)</span></label>
-            <textarea
-              className="field-input"
-              name="descripcion"
-              value={form.descripcion}
-              onChange={onChange}
-              placeholder="Notas adicionales..."
-              rows={2}
-              style={{ resize: 'vertical' }}
-              data-gramm="false"
-              data-enable-grammarly="false"
-            />
-
-            <div className="divider" />
+            <div className="field">
+              <label className="field-label" htmlFor="descripcion">
+                Descripción <span className="opt">opcional</span>
+              </label>
+              <textarea
+                id="descripcion"
+                className="input"
+                name="descripcion"
+                value={form.descripcion}
+                onChange={onChange}
+                placeholder="Notas adicionales…"
+                rows={2}
+                data-gramm="false"
+                data-enable-grammarly="false"
+              />
+            </div>
 
             {/* Sección 2 — Horario */}
-            <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--blue)', marginBottom: 10 }}>
-              📅 Horario
-            </p>
+            <p className="section-title"><Icono name="calendar" size={12} />Horario</p>
 
-            <label className="field-label">Fecha y hora del evento *</label>
-            <input
-              className="field-input"
-              type="datetime-local"
-              name="fecha_hora"
-              value={form.fecha_hora}
-              onChange={onChange}
-            />
+            <div className="field">
+              <label className="field-label" htmlFor="fecha_hora">
+                Fecha y hora <span className="req">*</span>
+              </label>
+              <input
+                id="fecha_hora"
+                className="input"
+                type="datetime-local"
+                name="fecha_hora"
+                value={form.fecha_hora}
+                onChange={onChange}
+              />
+            </div>
 
-            <div className="form-grid-row">
-              <div>
-                <label className="field-label">Avisar con</label>
-                <select className="field-input" name="anticipacion" value={form.anticipacion} onChange={onChange}>
+            <div className="grid-2">
+              <div className="field">
+                <label className="field-label" htmlFor="anticipacion">Avisar con</label>
+                <select
+                  id="anticipacion"
+                  className="input select"
+                  name="anticipacion"
+                  value={form.anticipacion}
+                  onChange={onChange}
+                >
                   {ANTICIPACION_OPCIONES.map(o => (
                     <option key={o.value} value={o.value}>{o.label}</option>
                   ))}
                 </select>
               </div>
-              <div>
-                <label className="field-label">Repetición</label>
-                <select className="field-input" name="recurrencia" value={form.recurrencia} onChange={onChange}>
+              <div className="field">
+                <label className="field-label" htmlFor="recurrencia">Repetición</label>
+                <select
+                  id="recurrencia"
+                  className="input select"
+                  name="recurrencia"
+                  value={form.recurrencia}
+                  onChange={onChange}
+                >
                   {RECURRENCIA_OPCIONES.map(o => (
                     <option key={o.value} value={o.value}>{o.label}</option>
                   ))}
@@ -302,193 +444,187 @@ export default function App() {
               </div>
             </div>
 
-            <div className="divider" />
+            {/* Sección 3 — Notificación */}
+            <p className="section-title"><Icono name="bell" size={12} />Notificación</p>
 
-            {/* Sección 3 — Canal */}
-            <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--emerald)', marginBottom: 10 }}>
-              🔔 Notificaciones
-            </p>
-
-            <label className="field-label">Enviar por</label>
-            <div className="canal-toggle">
-              {[
-                { val: 'email',    label: '📧 Email' },
-                { val: 'whatsapp', label: '📱 WhatsApp' },
-                { val: 'ambos',    label: '📱 + 📧 Ambos' },
-              ].map(({ val, label }) => (
-                <button
-                  key={val} type="button"
-                  className={`canal-btn${form.canal === val ? ' active' : ''}`}
-                  onClick={() => setCanal(val)}
-                >
-                  {label}
-                </button>
-              ))}
+            <div className="field">
+              <span className="field-label" id="canal-label">Enviar por</span>
+              <div className="segmented" role="group" aria-labelledby="canal-label">
+                {CANAL_OPCIONES.map(({ val, label, icon }) => (
+                  <button
+                    key={val}
+                    type="button"
+                    className={form.canal === val ? 'active' : ''}
+                    onClick={() => setCanal(val)}
+                    aria-pressed={form.canal === val}
+                  >
+                    <Icono name={icon} size={13} />
+                    {label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {(form.canal === 'email' || form.canal === 'ambos') && (
-              <>
-                <label className="field-label">
-                  Correo(s) *{' '}
-                  <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>— separa varios con coma</span>
+              <div className="field">
+                <label className="field-label" htmlFor="destinatario_email">
+                  Correos <span className="req">*</span>
+                  <span className="opt">separa varios con coma</span>
                 </label>
                 <input
-                  className="field-input"
+                  id="destinatario_email"
+                  className="input"
                   type="text"
                   name="destinatario_email"
                   value={form.destinatario_email}
                   onChange={onChange}
                   placeholder="tu@correo.com, otro@correo.com"
                 />
-                <p className="hint">📧 Predeterminado: {EMAIL_DEFAULT}</p>
-              </>
+                <p className="field-hint"><Icono name="mail" size={12} />Predeterminado: {EMAIL_DEFAULT}</p>
+              </div>
             )}
 
             {(form.canal === 'whatsapp' || form.canal === 'ambos') && (
-              <>
-                <label className="field-label">
-                  Número(s) WhatsApp *{' '}
-                  <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>— con código de país</span>
+              <div className="field">
+                <label className="field-label" htmlFor="destinatario_wa">
+                  Números WhatsApp <span className="req">*</span>
+                  <span className="opt">con código de país</span>
                 </label>
                 <input
-                  className="field-input"
+                  id="destinatario_wa"
+                  className="input"
                   name="destinatario_wa"
                   value={form.destinatario_wa}
                   onChange={onChange}
                   placeholder="5212229137794, 5218001234567"
                 />
-                <p className="hint">⚠️ Cada número debe activar CallMeBot una vez.</p>
-              </>
+                <p className="field-hint"><Icono name="alert" size={12} />Cada número debe activar CallMeBot una vez.</p>
+              </div>
             )}
 
-            <button className="btn-primary" type="submit" disabled={enviando} style={{ marginTop: 22 }}>
+            <button className="btn-primary" type="submit" disabled={enviando}>
               {enviando
-                ? <><span className="spinner" />Guardando...</>
-                : '🔔 Crear Recordatorio'
+                ? <><span className="spinner" />Guardando…</>
+                : <><Icono name="bell" size={15} />Crear recordatorio</>
               }
             </button>
           </form>
         </section>
 
         {/* ════ LISTA ════ */}
-        <section className="glass-card glass-card-list">
-          {/* Cabecera lista */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18, flexWrap: 'wrap', gap: 10 }}>
-            <h2 style={{ fontSize: 18, fontWeight: 700, color: '#fff' }}>📋 Mis Recordatorios</h2>
-            <button className="btn-secondary" onClick={cargarLista} disabled={cargando}>
-              {cargando ? '⏳' : '🔄 Actualizar'}
+        <section className="card card--list">
+          <div className="card-head">
+            <span className="card-head-icon"><Icono name="inbox" size={16} /></span>
+            <div className="card-head-text">
+              <h2>Mis recordatorios</h2>
+              <p>{conteo.todos} en total · {conteo.pendiente} por avisar</p>
+            </div>
+            <button
+              className="btn-ghost"
+              onClick={cargarLista}
+              disabled={cargando}
+              aria-label="Actualizar lista"
+            >
+              <Icono name="refresh" size={13} />
+              {cargando ? 'Cargando' : 'Actualizar'}
             </button>
           </div>
 
           {msgLista && (
-            <div className="alert alert-err" style={{ marginBottom: 14 }}>{msgLista}</div>
+            <div className="alert alert--err" role="alert">
+              <Icono name="alert" size={15} />
+              <span>{msgLista}</span>
+            </div>
           )}
 
           {/* Filtros */}
-          <div className="filter-tabs" style={{ marginBottom: 18 }}>
-            {[
-              { key: 'todos',     label: `Todos (${conteo.todos})` },
-              { key: 'pendiente', label: `⏳ Pendientes (${conteo.pendiente})` },
-              { key: 'enviado',   label: `✅ Enviados (${conteo.enviado})` },
-              { key: 'cancelado', label: `❌ Cancelados (${conteo.cancelado})` },
-              { key: 'vencido',   label: `⌛ Vencidos (${conteo.vencido})` },
-            ].map(f => (
+          <div className="filter-bar" role="tablist" aria-label="Filtrar por estado">
+            {FILTROS.map(f => (
               <button
                 key={f.key}
-                className={`filter-tab${filtro === f.key ? ' active' : ''}`}
+                role="tab"
+                aria-selected={filtro === f.key}
+                className={`chip${filtro === f.key ? ' active' : ''}`}
                 onClick={() => setFiltro(f.key)}
               >
                 {f.label}
+                <span className="chip-count">{conteo[f.key]}</span>
               </button>
             ))}
           </div>
 
-          {/* Skeletons de carga */}
+          {/* Carga */}
           {cargando && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {[1,2,3].map(i => (
-                <div key={i} className="skeleton" style={{ height: 90, borderRadius: 12 }} />
-              ))}
+              {[1, 2, 3].map(i => <div key={i} className="skeleton" />)}
             </div>
           )}
 
-          {/* Estado vacío */}
+          {/* Vacío */}
           {!cargando && lista.length === 0 && (
-            <div style={{ textAlign: 'center', padding: '48px 20px', color: 'var(--text-muted)' }}>
-              <div style={{ fontSize: 48, marginBottom: 12, opacity: 0.5 }}>🔔</div>
-              <p style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)' }}>
-                {filtro === 'todos' ? 'No hay recordatorios aún' : `No hay recordatorios ${filtro}s`}
+            <div className="empty">
+              <span className="empty-icon"><Icono name="inbox" size={20} /></span>
+              <p className="empty-title">
+                {filtro === 'todos' ? 'Todavía no hay recordatorios' : `Sin recordatorios ${nombreFiltro}`}
               </p>
-              <p style={{ fontSize: 13, marginTop: 6 }}>
-                {filtro === 'todos' ? '¡Crea el primero con el formulario! 👈' : 'Prueba otro filtro'}
+              <p className="empty-text">
+                {filtro === 'todos' ? 'Crea el primero con el formulario.' : 'Prueba con otro filtro.'}
               </p>
             </div>
           )}
 
           {/* Lista */}
-          <div className="rec-list-container">
+          <div className="rec-list">
             {lista.map((r, idx) => (
-              <div
+              <article
                 key={r.id}
-                className="rec-item"
+                className={`rec-item${r.estado === 'cancelado' ? ' rec-item--cancelado' : ''}`}
                 style={{
-                  opacity: r.estado === 'cancelado' ? 0.55 : 1,
-                  animationDelay: `${idx * 0.05}s`,
-                  borderLeft: `3px solid ${ESTADO_CONFIG[r.estado]?.dot || '#a78bfa'}`,
+                  animationDelay: `${Math.min(idx * 0.04, 0.3)}s`,
+                  boxShadow: `inset 3px 0 0 var(--${r.estado === 'pendiente' ? 'amber'
+                    : r.estado === 'enviado' ? 'mint'
+                    : r.estado === 'cancelado' ? 'rose' : 'slate'})`,
                 }}
               >
-                {/* Cabecera item responsiva */}
-                <div className="rec-item-header">
-                  <div className="rec-item-title-box">
-                    <p style={{ fontWeight: 700, fontSize: 15, color: '#fff', marginBottom: r.descripcion ? 4 : 0 }}>
-                      {r.titulo}
-                    </p>
-                    {r.descripcion && (
-                      <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.4 }}>{r.descripcion}</p>
-                    )}
+                <div className="rec-head">
+                  <div className="rec-title-box">
+                    <h3 className="rec-title">{r.titulo}</h3>
+                    {r.descripcion && <p className="rec-desc">{r.descripcion}</p>}
                   </div>
-                  <div className="rec-item-badges">
+                  <div className="rec-badges">
                     <BadgeCanal canal={r.canal} />
                     <BadgeEstado estado={r.estado} />
                   </div>
                 </div>
 
-                {/* Detalles */}
-                <div style={{
-                  display: 'flex', flexWrap: 'wrap', gap: 10,
-                  marginTop: 10, fontSize: 12, color: 'var(--text-muted)',
-                }}>
-                  <span>📅 {fmtFecha(r.fecha_hora)}</span>
-                  <span style={{ color: r.estado === 'pendiente' ? 'var(--amber)' : 'var(--text-muted)', fontWeight: r.estado === 'pendiente' ? 600 : 400 }}>
-                    🕐 {tiempoRelativo(r.fecha_hora)}
+                <div className="rec-meta">
+                  <span className="meta"><Icono name="calendar" size={12} />{fmtFecha(r.fecha_hora)}</span>
+                  <span className={`meta${r.estado === 'pendiente' ? ' meta--strong' : ''}`}>
+                    <Icono name="clock" size={12} />{tiempoRelativo(r.fecha_hora)}
                   </span>
-                  <span>⏰ {
-                    r.anticipacion < 60 ? `${r.anticipacion}m antes`
-                    : r.anticipacion === 1440 ? '1 día antes'
-                    : `${r.anticipacion / 60}h antes`
-                  }</span>
+                  <span className="meta"><Icono name="bell" size={12} />{fmtAnticipacion(r.anticipacion)}</span>
                   {r.recurrencia !== 'ninguna' && (
-                    <span>🔁 {r.recurrencia.charAt(0).toUpperCase() + r.recurrencia.slice(1)}</span>
+                    <span className="meta"><Icono name="repeat" size={12} />{capitalizar(r.recurrencia)}</span>
                   )}
                 </div>
 
-                {/* Destinatarios */}
-                <div className="rec-item-recipients" style={{ marginTop: 8, fontSize: 12, color: 'var(--text-muted)', opacity: 0.75 }}>
-                  {r.destinatario_email && <span>📧 {r.destinatario_email}</span>}
-                  {r.destinatario_wa    && <span style={{ marginLeft: 10 }}>📱 {r.destinatario_wa}</span>}
-                </div>
+                {(r.destinatario_email || r.destinatario_wa) && (
+                  <div className="rec-dest">
+                    {r.destinatario_email && (
+                      <span><Icono name="mail" size={12} />{r.destinatario_email}</span>
+                    )}
+                    {r.destinatario_wa && (
+                      <span><Icono name="phone" size={12} />{r.destinatario_wa}</span>
+                    )}
+                  </div>
+                )}
 
-                {/* Acción cancelar */}
                 {r.estado === 'pendiente' && (
-                  <button
-                    className="btn-cancel-item"
-                    style={{ marginTop: 10 }}
-                    onClick={() => handleCancelar(r.id)}
-                  >
-                    ✕ Cancelar
+                  <button className="btn-cancel" onClick={() => handleCancelar(r.id)}>
+                    <Icono name="close" size={12} />Cancelar
                   </button>
                 )}
-              </div>
+              </article>
             ))}
           </div>
         </section>
