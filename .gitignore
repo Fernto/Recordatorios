@@ -3,5 +3,8 @@ dist/
 .env
 *.local
 
+# Estado local de Netlify CLI (link al sitio)
+.netlify/
+
 # Logs locales
 *.log
