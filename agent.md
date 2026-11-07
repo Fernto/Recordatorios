@@ -12,7 +12,7 @@ Aplicación full-stack para crear, programar y despachar recordatorios por **cor
 2. **Supabase (PostgreSQL)**: tabla `recordatorios`, tabla `logs_envios` y la vista `v_recordatorios_pendientes`.
 3. **Motor de envío**: una sola implementación (`worker.mjs` + `mailer.mjs`) ejecutada desde dos sitios intercambiables:
    - `cron.mjs`, proceso Node continuo (VPS / Render / Railway).
-   - `netlify/functions/check-reminders.mjs`, invocado por un cron HTTP externo.
+   - `netlify/functions/check-reminders.mjs`, invocado por el scheduler declarado en `netlify.toml` (cada 5 min).
 
 > **Regla de oro:** la lógica de envío vive **una sola vez** en `mailer.mjs` + `worker.mjs`. `cron.mjs` y las funciones de Netlify son adaptadores finos. No dupliques plantillas, ICS ni reglas de recurrencia.
 
@@ -290,9 +290,13 @@ Si cambias la paleta, hazlo **solo** en `:root`: badges, alertas y el riel de es
 ## 🌍 11. Despliegue
 
 **Netlify**
+- Sitio: <https://recordatorios-fernto.netlify.app> · proyecto `7a66495e-13fb-40f1-81cc-8f1060483b2e` · equipo *ferntomas1's team*. Se linkea con `npx netlify-cli link`, que escribe `.netlify/` (ignorado por git).
 - `netlify.toml`: `command = "npm run build"`, `publish = "dist"`, `functions = "netlify/functions"`, `node_bundler = "esbuild"`.
 - `esbuild` es necesario para que las funciones empaqueten `db.mjs`, `mailer.mjs` y `worker.mjs`, que están **fuera** de la carpeta de funciones (imports relativos `../../`).
-- Variables: todas las de la sección 5 (sin `.env`).
+- Variables: todas las de la sección 5 (sin `.env`). Hoy están cargadas en el sitio con `npx netlify-cli env:import .env`. **No definas `CRON_SECRET`** (ver sección 9). Las `VITE_*` se incrustan en el build: si cambian, hay que redesplegar.
+- Redesplegar: `npx netlify-cli deploy --build --prod`. Un deploy de *preview* **no** activa el schedule.
+- `check-reminders` está declarada como *scheduled* cada 5 min. Netlify solo la ejecuta en deploys publicados y ya no la expone por URL (un GET directo devuelve `403`, no es un fallo).
+- Verificación: `npx netlify-cli logs --source functions --function check-reminders --since 10m`. Debe aparecer una invocación cada 5 min con `Duration` y, si falta la migración, el aviso del estado `vencido`. Si `CRON_SECRET` estuviera definido, cada ejecución respondería `401` sin escribir nada en el log de la función: el síntoma es "no llegan avisos" sin errores visibles.
 - **Avisos**: `netlify.toml` declara `[functions."check-reminders"] schedule = "*/5 * * * *"`. Netlify solo lo ejecuta en **deploys publicados** (no en `netlify dev`), así que el ciclo corre como máximo cada 5 minutos.
 - Alternativa: cron externo → `/.netlify/functions/check-reminders` cada minuto, **después de quitar** el bloque `[functions."check-reminders"]` (una función programada no acepta invocación por URL). Si lo use así, define `CRON_SECRET` y manda el `Bearer`.
 - ⚠️ Con el scheduler nativo, `CRON_SECRET` debe quedar **vacío** (Netlify no envía `Authorization`).
