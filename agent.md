@@ -161,6 +161,8 @@ CONFIRMATION_API_TOKEN=             # permite llamadas servidor-a-servidor al en
 
 No hay tests, linter ni typecheck configurados. La verificación habitual es `npm run build` y una prueba manual del flujo.
 
+> **El aviso no lo envía el navegador.** Al crear un recordatorio solo se dispara la **confirmación** (vía `/api/send-confirmation`). El correo de aviso lo manda un ciclo del worker, así que sin `npm run cron` en local (o el cron de Netlify en producción) llega el primer correo y **nunca** el segundo. Síntoma típico: "la confirmación llega, el aviso no".
+
 ---
 
 ## 🧩 7. Módulos compartidos del servidor
@@ -248,7 +250,9 @@ Dev: middleware de `vite.config.js` → **el mismo handler** de Netlify. Prod: r
 
 ### `GET|POST /.netlify/functions/check-reminders`
 
-Ejecuta un ciclo completo. Si `CRON_SECRET` está definido, exige `Authorization: Bearer $CRON_SECRET`. Devuelve conteos y detalle. Pensado para cron-job.org / EasyCron cada minuto.
+Ejecuta un ciclo completo. Si `CRON_SECRET` está definido, exige `Authorization: Bearer $CRON_SECRET`. Devuelve conteos y detalle. Hoy lo dispara el scheduler declarado en `netlify.toml` (cada 5 min). **No definas `CRON_SECRET` con el scheduler de Netlify**: no manda `Authorization` y la función devolvería `401`, dejando los avisos sin enviar.
+
+> Al declararla como *scheduled*, Netlify ya no la expone por URL. Si prefieres cron externo (cron-job.org / EasyCron), **quita** el bloque `[functions."check-reminders"]` de `netlify.toml` y vuelve a ser una función HTTP normal.
 
 ---
 
@@ -289,7 +293,11 @@ Si cambias la paleta, hazlo **solo** en `:root`: badges, alertas y el riel de es
 - `netlify.toml`: `command = "npm run build"`, `publish = "dist"`, `functions = "netlify/functions"`, `node_bundler = "esbuild"`.
 - `esbuild` es necesario para que las funciones empaqueten `db.mjs`, `mailer.mjs` y `worker.mjs`, que están **fuera** de la carpeta de funciones (imports relativos `../../`).
 - Variables: todas las de la sección 5 (sin `.env`).
-- Cron externo → `/.netlify/functions/check-reminders` cada minuto.
+- **Avisos**: `netlify.toml` declara `[functions."check-reminders"] schedule = "*/5 * * * *"`. Netlify solo lo ejecuta en **deploys publicados** (no en `netlify dev`), así que el ciclo corre como máximo cada 5 minutos.
+- Alternativa: cron externo → `/.netlify/functions/check-reminders` cada minuto, **después de quitar** el bloque `[functions."check-reminders"]` (una función programada no acepta invocación por URL). Si lo use así, define `CRON_SECRET` y manda el `Bearer`.
+- ⚠️ Con el scheduler nativo, `CRON_SECRET` debe quedar **vacío** (Netlify no envía `Authorization`).
+- Límite de 30 s por invocación: con muchos recordatorios a la vez el ciclo podría quedar corto; en ese caso baja la frecuencia o usa el worker 24/7 (`npm run cron`).
+- Con anticipaciones cortas (15 min) el aviso puede llegar hasta 5 minutos tarde: la vista SQL exige que la ventana esté abierta, no puntualidad exacta.
 
 **Base de datos**
 - Instalación nueva: `supabase_schema.sql`.
@@ -326,3 +334,4 @@ Si cambias la paleta, hazlo **solo** en `:root`: badges, alertas y el riel de es
 7. Si añades un estado a `estado`, actualiza el `CHECK`, `ESTADO_CONFIG` en `App.jsx`, la clase `.badge--<estado>` en `index.css` y `FILTROS`.
 8. Antes de tocar la estética, revisa la sección 10: la paleta vive en `:root` y los componentes ya existen. Evita volver a estilos inline con colores literales.
 9. Los iconos son SVG propios (`TRAZOS`). No introduzcas una librería de iconos ni emoji nuevos para acciones.
+10. Si un aviso "no llega", comprueba **primero** que exista un ciclo ejecutándose (`npm run cron` o el schedule de Netlify) antes de tocar `mailer.mjs`: el envío está probado de extremo a extremo (correo real, `estado → enviado`) y el fallo habitual es que nadie arranca el worker.

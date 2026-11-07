@@ -8,6 +8,11 @@
 [functions]
   node_bundler = "esbuild"
 
+# Sin este cron no se envía NINGÚN aviso: la confirmación sale del navegador al
+# crear el recordatorio, pero el aviso depende de que este ciclo se ejecute.
+[functions."check-reminders"]
+  schedule = "*/5 * * * *"
+
 [[redirects]]
   from = "/api/send-confirmation"
   to = "/.netlify/functions/send-confirmation"
